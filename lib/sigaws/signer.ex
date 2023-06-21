@@ -163,7 +163,7 @@ defmodule Sigaws.Signer do
     [
       m,
       "\n",
-      URI.encode(p),
+      url_encode(p, true),
       "\n",
       c_qs,
       "\n",
@@ -189,4 +189,28 @@ defmodule Sigaws.Signer do
   defp payload_hash(:unsigned), do: "UNSIGNED-PAYLOAD"
   defp payload_hash({:content_hash, hash}), do: hash
   defp payload_hash(payload), do: payload |> Util.hexdigest()
+
+  # This function sticks to the requirements from Amazon for the encoding
+  # https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+  defp url_encode(value, path \\ false) when is_binary(value) do
+    encoded = URI.encode_www_form(value)
+
+    encoded
+    |> replace_chars(path)
+  end
+
+  defp replace_chars(encoded, path) do
+    encoded
+    |> replace_plus_with_space()
+    |> replace_star()
+    |> replace_percent_7e()
+    |> (fn encoded -> if(path, do: replace_percent_2f(encoded), else: encoded) end).()
+  end
+
+  defp replace_plus_with_space(encoded), do: String.replace(encoded, "+", "%20")
+  defp replace_star(encoded), do: String.replace(encoded, "*", "%2A")
+  defp replace_percent_7e(encoded), do: String.replace(encoded, "%7E", "~")
+  defp replace_percent_2f(encoded), do: String.replace(encoded, "%2F", "/")
+
+  def url_encode(_, _), do: ""
 end

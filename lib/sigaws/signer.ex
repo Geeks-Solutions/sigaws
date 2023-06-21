@@ -212,5 +212,5 @@ defmodule Sigaws.Signer do
   defp replace_percent_7e(encoded), do: String.replace(encoded, "%7E", "~")
   defp replace_percent_2f(encoded), do: String.replace(encoded, "%2F", "/")
 
-  def url_encode(_, _), do: ""
+  defp url_encode(_, _), do: ""
 end
